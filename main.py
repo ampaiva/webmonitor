@@ -6,6 +6,8 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
+import logging
+
 
 # Load environment variables from .env file
 load_dotenv()
@@ -18,7 +20,8 @@ CHECKSUM_FILE = "webpage_checksum.txt"
 EMAIL_CONFIG = {
     "sender": os.getenv("EMAIL_SENDER"),
     "password": os.getenv("EMAIL_PASSWORD"),
-    "receiver": os.getenv("EMAIL_RECEIVER")
+    "receiver": os.getenv("EMAIL_RECEIVER"),
+    "url": os.getenv("URL"),
 }
 
 
@@ -79,10 +82,23 @@ def send_email(subject, body):
         print(f"Failed to send email: {e}")
 
 
+def log():
+    logging.basicConfig(
+        filename="/home/apaiva/git/my/webmonitor/script_debug.log",
+        level=logging.DEBUG,
+        format="%(asctime)s - %(message)s"
+    )
+
+    logging.debug("This is a debug message")
+    logging.info("This is an info message")
+    logging.error("This is an error message")
+
+
 def monitor_website():
     """Monitor the website for changes."""
-    print("Fetching the webpage...")
-    content = fetch_webpage(URL)
+    print(f"Fetching {EMAIL_CONFIG["url"]}...")
+    log()
+    content = fetch_webpage(EMAIL_CONFIG["url"])
 
     print("Extracting target content...")
     try:
@@ -104,7 +120,7 @@ def monitor_website():
         print("Change detected! Sending alert...")
         send_email(
             subject="Website Change Detected",
-            body=f"The specific section of the website has changed:\n\n{target_content}"
+            body=f"The specific section of the website has changed:\n\n{target_content}",
         )
         save_checksum(CHECKSUM_FILE, current_checksum)
     else:
